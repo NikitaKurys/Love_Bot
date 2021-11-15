@@ -1,14 +1,9 @@
 import vk_api
 import datetime
-from vk_api.utils import get_random_id
-from vk_api.longpoll import VkLongPoll, VkEventType
-from vk_api.keyboard import VkKeyboard, VkKeyboardColor
+from vk_api.longpoll import VkLongPoll
 import json
-from vk_api.exceptions import ApiError
-from sql import engine, Base, Session, User, FavoritesUser, FavoritPhotos, BlackList
+from sql import engine, Session
 from config import group_token, my_token
-from sqlalchemy.exc import IntegrityError, InvalidRequestError
-
 
 vk = vk_api.VkApi(token=group_token)
 longpoll = VkLongPoll(vk)
@@ -21,17 +16,17 @@ def search_users(sex, age_from, age_to, city):
     vk1 = vk_api.VkApi(token=my_token)
     link_profile = 'https://vk.com/id'
     search = vk1.method('users.search', {'sort': 1,
-                               'sex': sex,
-                               'v': '5.131',
-                               'age_from': age_from,
-                               'age_to': age_to,
-                               'has_photo': 1,
-                               'count': 20,
-                               'status': 1,
-                               'hometown': city,
-                               })
+                                         'sex': sex,
+                                         'v': '5.131',
+                                         'age_from': age_from,
+                                         'age_to': age_to,
+                                         'has_photo': 1,
+                                         'count': 20,
+                                         'status': 1,
+                                         'hometown': city,
+                                         })
     for elements in search['items']:
-        if elements['is_closed'] == False:
+        if elements['is_closed'] is False:
             user = [
                 elements['first_name'],
                 elements['last_name'],
@@ -48,13 +43,13 @@ def search_photo(owner_id):
     vk1 = vk_api.VkApi(token=my_token)
     try:
         search = vk1.method('photos.get', {'access_token': my_token,
-                                          'v': '5.131',
-                                          'owner_id': owner_id,
-                                          'album_id': 'profile',
-                                          'count': 10,
-                                          'extended': 1,
-                                          'photo_sizes': 0
-                                          })
+                                           'v': '5.131',
+                                           'owner_id': owner_id,
+                                           'album_id': 'profile',
+                                           'count': 10,
+                                           'extended': 1,
+                                           'photo_sizes': 0
+                                           })
     except vk_api.exceptions.ApiError:
         return 'Нет доступа к фото'
     users_photos = []
@@ -62,7 +57,8 @@ def search_photo(owner_id):
         try:
             users_photos.append(
                 [search['items'][i]['likes']['count'],
-                'photo' + str(search['items'][i]['owner_id']) + '_' + str(search['items'][i]['id'])])
+                 'photo' + str(search['items'][i]['owner_id'])
+                 + '_' + str(search['items'][i]['id'])])
         except IndexError:
             users_photos.append(['нет фото.'])
     return users_photos
@@ -92,4 +88,4 @@ def json_create(list):
     with open("info.json", "a", encoding='UTF-8') as file:
         json.dump(res_list, file, ensure_ascii=False)
 
-    print(f'Информация успешно записана в json файл.')
+    print('Информация успешно записана в json файл.')

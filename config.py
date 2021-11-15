@@ -1,2 +1,3 @@
-group_token = ''
-my_token = ''
+group_token = '4691d884253a1c0fdfc40b9513061e1d844d9dfb0cd06f1624f4e67852c1eb1100d64c9ece477866bb3f7'
+my_token = '12448bc4a9633b32eb2c85cc341b9ada911a343b7f4c540797cffbdc9f62b471375823184c80ea433e3e2'
+sql_info = 'postgresql://postgres:Hjuvfyhjuvfy321@localhost:5432/vk_db'

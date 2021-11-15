@@ -1,14 +1,14 @@
 import vk_api
-from vk_api.longpoll import VkLongPoll, VkEventType
-from config import group_token
+from vk_api.longpoll import VkLongPoll
+from config import group_token, sql_info
 import sqlalchemy as sq
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
-from sqlalchemy import create_engine, Column, Integer, String, DateTime
+from sqlalchemy import create_engine
 from random import randrange
 
-engine = create_engine('postgresql://postgres:@localhost:5432/vk_db', client_encoding='utf8') # удалил пароль
+engine = create_engine(sql_info, client_encoding='utf8')
 Base = declarative_base()
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -17,14 +17,14 @@ vk = vk_api.VkApi(token=group_token)
 longpoll = VkLongPoll(vk)
 
 
-#БД пользователя ВК
+# БД пользователя ВК
 class User(Base):
     __tablename__ = 'vk_user'
     id = sq.Column(sq.Integer, primary_key=True, autoincrement=True)
     vk_id = sq.Column(sq.Integer, unique=True, nullable=False)
 
 
-#БД избранных анкет
+# БД избранных анкет
 class FavoritesUser(Base):
     __tablename__ = 'favorites_user'
     id = sq.Column(sq.Integer, primary_key=True, autoincrement=True)
@@ -33,16 +33,19 @@ class FavoritesUser(Base):
     second_name = sq.Column(sq.String)
     city = sq.Column(sq.String)
     link = sq.Column(sq.String)
-    id_user = sq.Column(sq.Integer, sq.ForeignKey('vk_user.id', ondelete='CASCADE'))
+    id_user = sq.Column(sq.Integer,
+                        sq.ForeignKey('vk_user.id', ondelete='CASCADE'))
 
 
-#БД избранных фото
+# БД избранных фото
 class FavoritPhotos(Base):
     __tablename__ = 'FavoritPhotos'
     id = sq.Column(sq.Integer, primary_key=True, autoincrement=True)
     link_photo = sq.Column(sq.String)
     count_likes = sq.Column(sq.Integer)
-    id_favorites_user = sq.Column(sq.Integer, sq.ForeignKey('favorites_user.id', ondelete='CASCADE'))
+    id_favorites_user = sq.Column(sq.Integer,
+                                  sq.ForeignKey('favorites_user.id',
+                                                ondelete='CASCADE'))
 
 
 # БД черного списка
@@ -56,28 +59,18 @@ class BlackList(Base):
     link = sq.Column(sq.String)
     link_photo = sq.Column(sq.String)
     count_likes = sq.Column(sq.Integer)
-    id_user = sq.Column(sq.Integer, sq.ForeignKey('vk_user.id', ondelete='CASCADE'))
+    id_user = sq.Column(sq.Integer,
+                        sq.ForeignKey('vk_user.id',
+                                      ondelete='CASCADE'))
 
 
 # Пишет сообщение пользователю
 def write_msg(user_id, message, attachment=None):
     vk.method('messages.send', {'user_id': user_id,
-               'message': message,
-               'random_id': randrange(10 ** 7),
-               'attachment': attachment
-              })
-#Хотел добавить клавиши Боту, но почему-то функция не принимала другое значение
-# def write_msg(user_id, message, keyboard = None, attachment=None):
-    # post = {'user_id': user_id,
-    #         'message': message,
-    #         'random_id': randrange(10 ** 7),
-    #         'attachment': attachment
-    #         })
-    # if keyboard != None:
-    #     post['keyboard'] = keyboard.get_keyboard()
-    # else:
-    #     post = post
-#     vk.method('messages.send', )
+                                'message': message,
+                                'random_id': randrange(10 ** 7),
+                                'attachment': attachment
+                                })
 
 
 # Регистрация пользователя в БД
@@ -164,7 +157,10 @@ def delete_db_favorites(ids):
 
 
 # Добавление человека в черный список
-def add_to_black_list(event_id, vk_id, first_name, second_name, city, link, link_photo, count_likes, id_user):
+def add_to_black_list(event_id, vk_id,
+                      first_name, second_name,
+                      city, link,
+                      link_photo, count_likes, id_user):
     try:
         new_user = BlackList(
             vk_id=vk_id,
